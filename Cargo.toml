@@ -1,0 +1,9 @@
+[package]
+name = "rust-hpc"
+version = "0.1.0"
+authors = ["RuiJCS <rjcsvv@gmail.com>"]
+
+[dependencies]
+ocl = "0.18"
+image = "*"
+colorify = "*"
