@@ -8,8 +8,10 @@ use std::path::Path;
 use ocl::ProQue;
 use image::GenericImage;
 
-use ocl::{Context, Queue, Device, Program, Image, Sampler, Kernel, Buffer};
+use ocl::{Context, Queue, Device, Program, Image, Sampler, Kernel, Buffer, Event, EventList};
 use ocl::enums::{ImageChannelOrder, ImageChannelDataType, AddressingMode, FilterMode, MemObjectType};
+use ocl::flags::{CommandQueueProperties};
+use ocl::enums::ProfilingInfo;
 
 
 
@@ -127,10 +129,12 @@ fn paint_blue() -> ocl::Result<()> {
 
 
 fn convolute() -> ocl::Result<()> {
-    const KERNEL_SIZE: u32 = 501;
+    const KERNEL_SIZE: u32 = 31;
     const KERNEL_SIZE_HALF: u32 = KERNEL_SIZE / 2;
     const BUFF_SIZE: u32 = KERNEL_SIZE * KERNEL_SIZE;
     const BUFF_VAL: f32 = 1.0 / BUFF_SIZE as f32;
+    let KERNELS: String = String::from("src/kernels.cl");
+    let KERNEL_NAME: String = String::from("convolute_mem");
     let FILE: String = String::from("leninha.jpg");
     let INPUT_FILE: String = format!("files/{}",FILE);
     let OUTPUT_FILE: String = format!("files/output_{}",FILE);
@@ -140,15 +144,17 @@ fn convolute() -> ocl::Result<()> {
                 .unwrap()
                 .to_rgba();
 
-    let mut f = File::open("src/kernels.cl").expect("file not found");
+    let mut f = File::open(KERNELS).expect("file not found");
 
     let mut src = String::new();
     f.read_to_string(&mut src)
         .expect("something went wrong reading the file");
 
+    println!("{}",src);
+
     let context = Context::builder().devices(Device::specifier().first()).build().unwrap();
     let device = context.devices()[0];
-    let queue = Queue::new(&context, device, None).unwrap();
+    let queue = Queue::new(&context, device, Some(CommandQueueProperties::new().profiling())).unwrap();
 
     let program = Program::builder()
         .src(src)
@@ -190,7 +196,7 @@ fn convolute() -> ocl::Result<()> {
 
     let kernel = Kernel::builder()
         .program(&program)
-        .name("convolute")
+        .name(KERNEL_NAME)
         .queue(queue.clone())
         .gws(&dims)
         .arg_img(&src_image)
@@ -198,9 +204,25 @@ fn convolute() -> ocl::Result<()> {
         .arg_buf(&filter)
         .build().unwrap();
 
-    unsafe { kernel.enq().unwrap(); }
+    let mut event_time = EventList::new();
 
-    dst_image.read(&mut img).enq().unwrap();
+    unsafe { kernel.cmd().enew(& mut event_time).enq().unwrap(); }
+
+    println!("Waiting");
+    queue.finish().unwrap();
+    println!("Finished");
+
+    dst_image.read(&mut img).ewait(&event_time).enq().unwrap();
+
+    let event = event_time.pop().unwrap();
+    // let profiling = String::from(event_time.profiling_info());
+    let start = event.profiling_info(ocl::enums::ProfilingInfo::Start).unwrap().time().unwrap();
+    let end = event.profiling_info(ocl::enums::ProfilingInfo::End).unwrap().time().unwrap();
+    let time = (end as f64 - start as f64) / 1000000000.0;
+
+    println!("The kernel started at {}",start);
+    println!("The kernel ended at {}",end);
+    println!("The kernel took {} seconds to complete",time);
 
     // println!("{:?}",img);
 
@@ -221,6 +243,5 @@ fn main() {
 
     // img.save(fout,image::JPEG).unwrap();
     // paint_blue().unwrap();
-    println!("O buffer está a ser passado com os valores a 0!!!!!");
     convolute().unwrap();
 }
