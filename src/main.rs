@@ -138,11 +138,18 @@ fn convolute() -> ocl::Result<()> {
     let FILE: String = String::from("leninha.jpg");
     let INPUT_FILE: String = format!("files/{}",FILE);
     let OUTPUT_FILE: String = format!("files/output_{}",FILE);
-    let kernel_half: String = format!("-D KERNEL_SIZE_HALF={}",KERNEL_SIZE_HALF);
-
     let mut img = image::open(INPUT_FILE)
                 .unwrap()
                 .to_rgba();
+    let dims = img.dimensions();
+    let row_S = dims.1;
+    let col_S = dims.0;
+    let kernel_half = format!("-D KERNEL_SIZE_HALF={}",KERNEL_SIZE_HALF);
+    let row_size = format!("-D ROW_SIZE={}",row_S);
+    let col_size = format!("-D COL_SIZE={}",col_S);
+    let cl_opts = format!("{} {} {}",kernel_half, row_size,col_size);
+    
+
 
     let mut f = File::open(KERNELS).expect("file not found");
 
@@ -158,7 +165,7 @@ fn convolute() -> ocl::Result<()> {
 
     let program = Program::builder()
         .src(src)
-        .cmplr_opt(kernel_half)
+        .cmplr_opt(cl_opts)
         .devices(device)
         .build(&context).unwrap();
 
@@ -166,7 +173,6 @@ fn convolute() -> ocl::Result<()> {
         MemObjectType::Image2d).unwrap();
     println!("Image formats supported: {}.", sup_img_formats.len());
 
-    let dims = img.dimensions();
 
     let src_image = Image::<u8>::builder()
         .channel_order(ImageChannelOrder::Rgba)

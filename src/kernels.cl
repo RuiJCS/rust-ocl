@@ -63,18 +63,15 @@ __kernel void convolute_mem(read_only image2d_t src, write_only image2d_t result
         int fIndex = 0;
         float4 sum = (float4) 0.0;
         int2 coord = (int2) (get_global_id(0),get_global_id(1));
+        int2 local_coord = (int2) (get_local_id(0),get_local_id(1));
+        int local_array = local_coord.x * ROW_SIZE + local_coord.y;
+        
 
         __local float4 * pixels;
 
-        for (int i = -KERNEL_SIZE_HALF; i <= KERNEL_SIZE_HALF; i++) {
-                for(int j = -KERNEL_SIZE_HALF; j <= KERNEL_SIZE_HALF; j++) {
-                       int2 local_coord = (int2)(coord.x + i,coord.y + j);
-                        float4 pixel = read_imagef(src,sampler_const,local_coord);
-                        sum += pixel * flt[fIndex];
-                        fIndex++;
-                } 
-        }
-        // barrier(CLK_LOCAL_MEM_FENCE);
+        pixels = read_imagef(src,sampler_const,local_coord);
+
+        barrier(CLK_LOCAL_MEM_FENCE);
 
         // for (int i = 0; i <= fIndex; i++) {
         //         sum += pixels[i] * flt[i];
