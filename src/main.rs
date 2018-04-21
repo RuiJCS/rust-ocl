@@ -140,12 +140,12 @@ fn paint_blue() -> ocl::Result<()> {const KERNEL_SIZE: u32 = 31;
 
 
 fn convolute() -> ocl::Result<()> {
-    const KERNEL_SIZE: u32 = 31;
+    const KERNEL_SIZE: u32 = 3;
     const KERNEL_SIZE_HALF: u32 = KERNEL_SIZE / 2;
     const BUFF_SIZE: u32 = KERNEL_SIZE * KERNEL_SIZE;
     const BUFF_VAL: f32 = 1.0 / BUFF_SIZE as f32;
     let KERNELS: String = String::from("src/kernels.cl");
-    let KERNEL_NAME: String = String::from("convolute_mem");
+    let KERNEL_NAME: String = String::from("convolute");
     let FILE: String = String::from("leninha.jpg");
     let INPUT_FILE: String = format!("files/{}",FILE);
     let OUTPUT_FILE: String = format!("files/output_{}",FILE);

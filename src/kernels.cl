@@ -128,7 +128,7 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
                 }
 
         }
-        else if (local_coord.x == local_size.x-1) { // Right side of the image
+        if (local_coord.x == local_size.x-1) { // Right side of the image
 
                 if(local_coord.y == 0) {
                         // Case where the position is near the top right corner of the image
@@ -175,7 +175,7 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
                         }
                 }
         }
-        else if(local_coord.y == 0) {
+        if(local_coord.y == 0) {
                 // Case where the position is near the top, but far from the left or right corner of the image
                 for(int i = - KERNEL_SIZE_HALF; i < 0; i++){
                         int2 local_mem = (int2) (local_coord.x, local_coord.y + i);
@@ -183,7 +183,7 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
                         pixels[local_mem.y * ROW_SIZE + local_mem.x] = read_imagef(src,sampler_const,global_mem); 
                 }
         }
-        else if(local_coord == local_size.y - 1) {
+        if(local_coord.y == local_size.y - 1) {
                 // Case where the position is near the bottom, but far from the left or right corner of the image
                 for(int i = 1; i < KERNEL_SIZE_HALF; i++){
                         int2 local_mem = (int2) (local_coord.x, local_coord.y + i);
