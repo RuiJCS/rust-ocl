@@ -66,7 +66,7 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
         int local_array = local_coord.x * ROW_SIZE + local_coord.y;
         
         // Need to think of the size of the array
-        __local float4 pixels[KERNEL_SIZE_HALF * KERNEL_SIZE_HALF * 4 + ROW_SIZE * KERNEL_SIZE_HALF * 2 + COL_SIZE * KERNEL_SIZE_HALF * 2 + COL_SIZE * ROW_SIZE];
+        __local float4 pixels[KERNEL_SIZE_HALF * KERNEL_SIZE_HALF * 4 + ROW_SIZE * KERNEL_SIZE_HALF * 2 + COL_SIZE * KERNEL_SIZE_HALF * 2 + local_size.x * local_size.y];
 
         pixels[local_array] = read_imagef(src,sampler_const,local_coord);
 
