@@ -140,7 +140,7 @@ fn paint_blue() -> ocl::Result<()> {const KERNEL_SIZE: u32 = 31;
 
 
 fn convolute() -> ocl::Result<()> {
-    const KERNEL_SIZE: u32 = 21;
+    const KERNEL_SIZE: u32 = 9;
     const KERNEL_SIZE_HALF: u32 = KERNEL_SIZE / 2;
     const BUFF_SIZE: u32 = KERNEL_SIZE * KERNEL_SIZE;
     const BUFF_VAL: f32 = 1.0 / BUFF_SIZE as f32;
@@ -170,7 +170,7 @@ fn convolute() -> ocl::Result<()> {
     f.read_to_string(&mut src)
         .expect("something went wrong reading the file");
 
-    println!("{}",src);
+    // println!("{}",src);
 
     let context = Context::builder().devices(Device::specifier().first()).build().unwrap();
     let device = context.devices()[0];
@@ -217,7 +217,8 @@ fn convolute() -> ocl::Result<()> {
         .program(&program)
         .name(KERNEL_NAME)
         .queue(queue.clone())
-        .gws(&dims)
+        .global_work_size(&dims)
+        .local_work_size((16, 16))
         .arg(&src_image)
         .arg(&dst_image)
         .arg(&filter)

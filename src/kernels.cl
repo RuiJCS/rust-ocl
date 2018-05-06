@@ -63,73 +63,110 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
         int2 global_coord = (int2) (get_global_id(0),get_global_id(1));
         int2 local_coord = (int2) (get_local_id(0),get_local_id(1));
         int2 local_size = (int2) (get_local_size(0),get_local_size(1));
-        int SIZE_ROW = local_size.x + KERNEL_SIZE_HALF * 2;
-        int local_array = local_coord.y * SIZE_ROW + local_coord.x;
+        int2 global_size = (int2) (get_global_size(0),get_global_size(1));
+        int SIZE_ROW = local_size.x;
+        int COL_ROW = KERNEL_SIZE_HALF * 2;
+        int local_array = local_coord.y * SIZE_ROW + local_coord.x + COL_ROW;
         
         // Need to think of the size of the array
-        __local float4 pixels[KERNEL_SIZE_HALF * KERNEL_SIZE_HALF * 4 + 1 * KERNEL_SIZE_HALF * 2 + 1 * KERNEL_SIZE_HALF * 2 + 1 * 1];
+        __local float4 pixels[KERNEL_SIZE_HALF * KERNEL_SIZE_HALF * 4 + 16 * KERNEL_SIZE_HALF * 2 + 16 * KERNEL_SIZE_HALF * 2 + 16 * 16];
 
-        pixels[local_array] = read_imagef(src,sampler_const,local_coord);
+        pixels[local_array] = read_imagef(src,sampler_const,global_coord);
 
-        if (
-		get_global_id(0) < KERNEL_SIZE_HALF 			|| 
-		get_global_id(0) > COL_SIZE - KERNEL_SIZE_HALF - 1		|| 
-		get_global_id(1) < KERNEL_SIZE_HALF			||
-		get_global_id(1) > ROW_SIZE - KERNEL_SIZE_HALF - 1
-	)
-	{
-		// no computation for me, sync and exit
-		barrier(CLK_LOCAL_MEM_FENCE);
-		return;
-	}
-
+        // if (
+	// 	get_global_id(0) < KERNEL_SIZE_HALF 			|| 
+	// 	get_global_id(0) > COL_SIZE - KERNEL_SIZE_HALF - 1		|| 
+	// 	get_global_id(1) < KERNEL_SIZE_HALF			||
+	// 	get_global_id(1) > ROW_SIZE - KERNEL_SIZE_HALF - 1
+	// )
+	// {
+	// 	// no computation for me, sync and exit
+	// 	barrier(CLK_LOCAL_MEM_FENCE);
+	// 	return;
+	// }
         // Places to load the image to local memory
         if(local_coord.x < KERNEL_SIZE_HALF) {
                 // Left side of the image
                 int2 local_mem = (int2) (local_coord.x - KERNEL_SIZE_HALF, local_coord.y);
                 int2 global_mem = (int2) (global_coord.x - KERNEL_SIZE_HALF, global_coord.y);
-                pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+
+                if(global_mem.x < 0)
+                        global_mem.x = 0;
+
+                pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
 
                 if(local_coord.y < KERNEL_SIZE_HALF) {
                         // Top left corner of the image
-                        int2 local_mem = (int2) (local_coord.x - KERNEL_SIZE_HALF, local_coord.y - KERNEL_SIZE_HALF);
-                        int2 global_mem = (int2) (global_coord.x - KERNEL_SIZE_HALF, global_coord.y - KERNEL_SIZE_HALF);
-                        pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+                        local_mem.y =  local_mem.y - KERNEL_SIZE_HALF;
+                        global_mem.y = global_mem.y - KERNEL_SIZE_HALF;
+
+                        if(global_mem.y < 0)
+                                global_mem.y = 0;
+
+                        pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
                 }
+
         }
         if(local_coord.x > local_size.x - KERNEL_SIZE_HALF) {
                 // Right side of the image
                 int2 local_mem = (int2) (local_coord.x + KERNEL_SIZE_HALF, local_coord.y);
                 int2 global_mem = (int2) (global_coord.x + KERNEL_SIZE_HALF, global_coord.y);
-                pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+
+                if(global_mem.x >= global_size.x)
+                        global_mem.x = global_size.x;
+
+                pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
                 if(local_coord.y > local_size.y - KERNEL_SIZE_HALF) {
                         // Bottom right corner of the image
-                        int2 local_mem = (int2) (local_coord.x + KERNEL_SIZE_HALF, local_coord.y + KERNEL_SIZE_HALF);
-                        int2 global_mem = (int2) (global_coord.x + KERNEL_SIZE_HALF, global_coord.y + KERNEL_SIZE_HALF);
-                        pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+                        local_mem.y = local_mem.y + KERNEL_SIZE_HALF;
+                        global_mem.y = global_mem.y + KERNEL_SIZE_HALF;
+
+                        if(global_mem.y >= global_size.y)
+                                global_mem.y = global_size.y;
+
+                        pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
                 }
         }
 
         if(local_coord.y < KERNEL_SIZE_HALF) {
+                // Top of the image
                 int2 local_mem = (int2) (local_coord.x, local_coord.y - KERNEL_SIZE_HALF);
                 int2 global_mem = (int2) (global_coord.x, global_coord.y - KERNEL_SIZE_HALF);
-                pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+                
+                if(global_mem.y < 0)
+                        global_mem.y = 0;
+
+                pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
+
                 if(local_coord.x > local_size.y - KERNEL_SIZE_HALF) {
                         // Top right corner of the image
-                        int2 local_mem = (int2) (local_coord.x + KERNEL_SIZE_HALF, local_coord.y - KERNEL_SIZE_HALF);
-                        int2 global_mem = (int2) (global_coord.x + KERNEL_SIZE_HALF, global_coord.y - KERNEL_SIZE_HALF);
-                        pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+                        local_mem.x = local_mem.x + KERNEL_SIZE_HALF;
+                        global_mem.x = global_mem.x + KERNEL_SIZE_HALF;
+
+                        if(global_mem.x >= global_size.x)
+                                global_mem.x = global_size.x;
+
+                        pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
                 }
         }
         if(local_coord.y > local_size.y - KERNEL_SIZE_HALF) {
+                // Bottom of the image
                 int2 local_mem = (int2) (local_coord.x, local_coord.y + KERNEL_SIZE_HALF);
                 int2 global_mem = (int2) (global_coord.x, global_coord.y + KERNEL_SIZE_HALF);
-                pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+
+                if(global_mem.y >= global_size.y)
+                        global_mem.y = global_size.y;
+
+                pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
                 if(local_coord.x < KERNEL_SIZE_HALF) {
                         // Bottom left corner of the image
-                        int2 local_mem = (int2) (local_coord.x - KERNEL_SIZE_HALF, local_coord.y + KERNEL_SIZE_HALF);
-                        int2 global_mem = (int2) (global_coord.x - KERNEL_SIZE_HALF, global_coord.y + KERNEL_SIZE_HALF);
-                        pixels[local_mem.y * SIZE_ROW + local_mem.x] = read_imagef(src,sampler_const,global_mem);
+                        local_mem.x = local_coord.x - KERNEL_SIZE_HALF;
+                        global_mem.x = global_coord.x - KERNEL_SIZE_HALF;
+
+                        if(global_mem.x < 0)
+                                global_mem.x = 0;
+
+                        pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW] = read_imagef(src,sampler_const,global_mem);
                 }
         }
         
@@ -140,8 +177,8 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
         float4 sum = (float4) 0.0;
         for (int i = -KERNEL_SIZE_HALF; i <= KERNEL_SIZE_HALF; i++) {
                 for(int j = -KERNEL_SIZE_HALF; j <= KERNEL_SIZE_HALF; j++) {
-                        int2 local_mem = (int2)(local_coord.x + i,local_coord.y + j);
-                        float4 pixel = pixels[local_mem.y * SIZE_ROW + local_mem.x];
+                        int2 local_mem = (int2)(local_coord.x + j,local_coord.y + i);
+                        float4 pixel = pixels[local_mem.y * SIZE_ROW + local_mem.x + COL_ROW];
                         sum += pixel * flt[fIndex];
                         fIndex++;
                 } 
