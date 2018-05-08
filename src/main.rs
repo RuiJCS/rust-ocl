@@ -140,7 +140,7 @@ fn paint_blue() -> ocl::Result<()> {const KERNEL_SIZE: u32 = 31;
 
 
 fn convolute() -> ocl::Result<()> {
-    const KERNEL_SIZE: u32 = 21;
+    const KERNEL_SIZE: u32 = 15;
     const KERNEL_SIZE_HALF: u32 = KERNEL_SIZE / 2;
     const BUFF_SIZE: u32 = KERNEL_SIZE * KERNEL_SIZE;
     const BUFF_VAL: f32 = 1.0 / BUFF_SIZE as f32;
