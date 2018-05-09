@@ -140,13 +140,13 @@ fn paint_blue() -> ocl::Result<()> {const KERNEL_SIZE: u32 = 31;
 
 
 fn convolute() -> ocl::Result<()> {
-    const KERNEL_SIZE: u32 = 15;
+    const KERNEL_SIZE: u32 = 31;
     const KERNEL_SIZE_HALF: u32 = KERNEL_SIZE / 2;
     const BUFF_SIZE: u32 = KERNEL_SIZE * KERNEL_SIZE;
     const BUFF_VAL: f32 = 1.0 / BUFF_SIZE as f32;
     let KERNELS: String = String::from("src/kernels.cl");
-    let KERNEL_NAME: String = String::from("convolute_mem");
-    let FILE: String = String::from("leninha.jpg");
+    let KERNEL_NAME: String = String::from("convolute");
+    let FILE: String = String::from("car.jpg");
     let INPUT_FILE: String = format!("files/{}",FILE);
     let OUTPUT_FILE: String = format!("files/output_{}",FILE);
     let mut img = image::open(INPUT_FILE)
@@ -154,8 +154,8 @@ fn convolute() -> ocl::Result<()> {
                 .to_rgba();
     // Create a new ImgBuf with width: imgx and height: imgy
     let dims = img.dimensions();
-    let row_S = dims.1;
-    let col_S = dims.0;
+    let row_S = dims.0;
+    let col_S = dims.1;
     let mut res: image::ImageBuffer<image::Rgba<u8>, _> = image::ImageBuffer::new(row_S, col_S);
     let kernel_half = format!("-D KERNEL_SIZE_HALF={}",KERNEL_SIZE_HALF);
     let row_size = format!("-D ROW_SIZE={}",row_S);
@@ -217,7 +217,7 @@ fn convolute() -> ocl::Result<()> {
         .program(&program)
         .name(KERNEL_NAME)
         .queue(queue.clone())
-        .global_work_size(&dims)
+        .global_work_size((dims.0,dims.1,1))
         .local_work_size((16, 16))
         .arg(&src_image)
         .arg(&dst_image)

@@ -142,7 +142,7 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
         float4 sum = (float4) 0.0;
         for (int i = -KERNEL_SIZE_HALF; i <= KERNEL_SIZE_HALF; i++) {
                 for(int j = -KERNEL_SIZE_HALF; j <= KERNEL_SIZE_HALF; j++) {
-                        int2 local_mem = (int2)(local_coord.x + j,local_coord.y + i);
+                        int2 local_mem = (int2)(local_coord.x + i,local_coord.y + j);
                         float4 pixel = pixels[(local_mem.y + KERNEL_SIZE_HALF) * SIZE_ROW + local_mem.x + KERNEL_SIZE_HALF];
                         sum += pixel * flt[fIndex];
                         fIndex++;
