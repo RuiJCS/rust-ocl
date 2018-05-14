@@ -27,7 +27,7 @@ __kernel void add_numbers(__global float4* data, __global float* group_result) {
 
 __constant sampler_t sampler_const =
         CLK_NORMALIZED_COORDS_FALSE |
-        CLK_ADDRESS_REPEAT |
+        CLK_ADDRESS_MIRRORED_REPEAT |
         CLK_FILTER_NEAREST;
 
 __kernel void blue(read_only image2d_t image, write_only image2d_t result) {
@@ -40,7 +40,7 @@ __kernel void blue(read_only image2d_t image, write_only image2d_t result) {
         write_imagef(result,coord,pixel);
 }
 
-__kernel void convolute(read_only image2d_t src, write_only image2d_t result, __global float4 * flt) {
+__kernel void convolute(read_only image2d_t src, write_only image2d_t result, __constant float4 * flt) {
         int fIndex = 0;
         float4 sum = (float4) 0.0;
         int2 coord = (int2) (get_global_id(0),get_global_id(1));
@@ -59,7 +59,7 @@ __kernel void convolute(read_only image2d_t src, write_only image2d_t result, __
 }
 
 
-__kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t result, __global float4 * flt) {
+__kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t result, __constant float4 * flt) {
         int2 global_coord = (int2) (get_global_id(0),get_global_id(1));
         int2 local_coord = (int2) (get_local_id(0),get_local_id(1));
         int2 local_size = (int2) (get_local_size(0),get_local_size(1));

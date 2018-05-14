@@ -146,7 +146,7 @@ fn convolute() -> ocl::Result<()> {
     const BUFF_VAL: f32 = 1.0 / BUFF_SIZE as f32;
     let KERNELS: String = String::from("src/kernels.cl");
     let KERNEL_NAME: String = String::from("convolute");
-    let FILE: String = String::from("car.jpg");
+    let FILE: String = String::from("leninha.jpg");
     let INPUT_FILE: String = format!("files/{}",FILE);
     let OUTPUT_FILE: String = format!("files/output_{}",FILE);
     let mut img = image::open(INPUT_FILE)
@@ -218,7 +218,7 @@ fn convolute() -> ocl::Result<()> {
         .name(KERNEL_NAME)
         .queue(queue.clone())
         .global_work_size((dims.0,dims.1,1))
-        .local_work_size((16, 16))
+        .local_work_size((16, 16, 1))
         .arg(&src_image)
         .arg(&dst_image)
         .arg(&filter)
