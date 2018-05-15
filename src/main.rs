@@ -2,6 +2,10 @@ extern crate ocl;
 extern crate image;
 #[macro_use] extern crate colorify;
 
+mod filter;
+
+use filter::{Square, Filter};
+
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
@@ -207,10 +211,15 @@ fn convolute() -> ocl::Result<()> {
         .queue(queue.clone())
         .build().unwrap();
 
+
+    let sq: Square = Square::new(&BUFF_SIZE);
+
+    // println!("{:?}", sq);
+
     let filter = Buffer::builder()
                 .queue(queue.clone())
-                .len(BUFF_SIZE * 4)
-                .fill_val(BUFF_VAL)
+                .len(sq.size())
+                .copy_host_slice(sq.as_slice())
                 .build().unwrap();
 
     let kernel = Kernel::builder()
@@ -218,7 +227,7 @@ fn convolute() -> ocl::Result<()> {
         .name(KERNEL_NAME)
         .queue(queue.clone())
         .global_work_size((dims.0,dims.1,1))
-        .local_work_size((16, 16, 1))
+        .local_work_size((16, 16))
         .arg(&src_image)
         .arg(&dst_image)
         .arg(&filter)
