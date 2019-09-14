@@ -28,13 +28,9 @@ pub trait Filter {
 
 impl Square {
     pub fn new (fsize:&u32) -> Self {
-        let size: u32 = *fsize * 4;
-        let mut values: Vec<f32> = Vec::with_capacity(size as usize);
+        let size: u32 = fsize * 4;
         let value: f32 = 1.0 / *fsize as f32;
-        for int in 0..size {
-            // let value = val;
-            values.push(value);
-        }
+        let values = vec![value; size as usize];
         Self {size, values}
     }
 }

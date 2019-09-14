@@ -35,7 +35,7 @@ __kernel void blue(read_only image2d_t image, write_only image2d_t result) {
 
         float4 pixel = read_imagef(image,sampler_const,coord);
 
-        pixel += (float4) (0.0, 0.0, 0.1, 0.0);
+        pixel += (float4) (0.0, 0.0, 0.2, 0.0);
 
         write_imagef(result,coord,pixel);
 }

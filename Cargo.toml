@@ -2,6 +2,7 @@
 name = "rust-hpc"
 version = "0.1.0"
 authors = ["RuiJCS <rjcsvv@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 ocl = "0.18"
