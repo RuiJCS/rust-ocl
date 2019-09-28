@@ -128,7 +128,7 @@ fn paint_blue() -> ocl::Result<()> {const KERNEL_SIZE: u32 = 11;
 }
 
 fn test() {
-    let mut ocl = OclProgram::new(5, "src/kernels.cl".to_string(), "convolute".to_string(), "leninha.jpg".to_string());
+    let mut ocl = OclProgram::new(5, "src/kernels.cl".to_string(), "convolute_mem".to_string(), "Lenna_(test_image).png".to_string());
     ocl.run();
     println!("{}", ocl.print_profile());
 }

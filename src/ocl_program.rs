@@ -24,7 +24,7 @@ pub struct OclProgram {
 
 impl OclProgram {
 	pub fn new(kernel_size: u32, kernel_file_name: String, kernel_name: String, image_name: String) -> OclProgram {
-		let kernel_size_half: u32 = kernel_size / 2;
+		let kernel_size_half: u32 =  (kernel_size as f32 / 2.0).floor() as u32;
 		let buff_size: u32 = kernel_size * kernel_size;
 		let input_image: String = format!("files/{}",image_name);
 		let output_file: String = format!("files/output_{}",image_name);
@@ -34,11 +34,14 @@ impl OclProgram {
 		// Create a new ImgBuf with width: imgx and height: imgy
 		let dims = img.dimensions();
     	let res: image::ImageBuffer<image::Rgba<u8>, _> = image::ImageBuffer::new(dims.0, dims.1);
+		let block_size = format!("-D BLOCK_SIZE={}",kernel_size + kernel_size_half);
 		let kernel_half = format!("-D KERNEL_SIZE_HALF={}",kernel_size_half);
 		let row_size = format!("-D ROW_SIZE={}",dims.0);
 		let col_size = format!("-D COL_SIZE={}",dims.1);
-		let cl_opts = format!("{} {} {}",kernel_half, row_size,col_size);
+		let cl_opts = format!("{} {} {} {}",kernel_half, row_size,col_size,block_size);
 		let mut f = File::open(kernel_file_name).expect("file not found");
+
+		println!("{} {} {}", kernel_size,kernel_size_half, kernel_size + kernel_size_half);
 
 		let mut src = String::new();
 		f.read_to_string(&mut src)
@@ -78,8 +81,6 @@ impl OclProgram {
 
 
 		let sq: Square = Square::new(&buff_size);
-
-		// println!("{:?}", sq);
 
 		let filter = Buffer::builder()
 					.queue(queue.clone())
