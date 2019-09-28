@@ -22,6 +22,8 @@ pub struct OclProgram {
 	end_profile: Option<ProfilingInfoResult>,
 }
 
+const WORK_GROUP: u32 = 16;
+
 impl OclProgram {
 	pub fn new(kernel_size: u32, kernel_file_name: String, kernel_name: String, image_name: String) -> OclProgram {
 		let kernel_size_half: u32 =  (kernel_size as f32 / 2.0).floor() as u32;
@@ -31,10 +33,9 @@ impl OclProgram {
 		let img = image::open(input_image)
 					.unwrap()
 					.to_rgba();
-		// Create a new ImgBuf with width: imgx and height: imgy
 		let dims = img.dimensions();
     	let res: image::ImageBuffer<image::Rgba<u8>, _> = image::ImageBuffer::new(dims.0, dims.1);
-		let block_size = format!("-D BLOCK_SIZE={}",kernel_size + kernel_size_half);
+		let block_size = format!("-D BLOCK_SIZE={}",WORK_GROUP + kernel_size);
 		let kernel_half = format!("-D KERNEL_SIZE_HALF={}",kernel_size_half);
 		let row_size = format!("-D ROW_SIZE={}",dims.0);
 		let col_size = format!("-D COL_SIZE={}",dims.1);
@@ -46,8 +47,6 @@ impl OclProgram {
 		let mut src = String::new();
 		f.read_to_string(&mut src)
 			.expect("something went wrong reading the file");
-
-		// println!("{}",src);
 
 		let context = Context::builder().devices(Device::specifier().first()).build().unwrap();
 		let device = context.devices()[0];
@@ -93,7 +92,7 @@ impl OclProgram {
 			.name(kernel_name)
 			.queue(queue.clone())
 			.global_work_size((dims.0,dims.1,1))
-			.local_work_size((16, 16))
+			.local_work_size((WORK_GROUP, WORK_GROUP))
 			.arg(&src_image)
 			.arg(&dst_image)
 			.arg(&filter)
