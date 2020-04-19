@@ -79,8 +79,8 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
 
                 if(local_coord.y < KERNEL_SIZE_HALF) {
                         // Top left corner of the kernel
-                        local_mem.y =  local_mem.y - KERNEL_SIZE_HALF;
-                        global_mem.y = global_mem.y - KERNEL_SIZE_HALF;
+                        int2 local_mem = (int2) (local_array.x - KERNEL_SIZE_HALF, local_array.y - KERNEL_SIZE_HALF);
+                        int2 global_mem = (int2) (global_coord.x - KERNEL_SIZE_HALF, global_coord.y - KERNEL_SIZE_HALF);
 
                         pixels[local_mem.y][local_mem.x] = read_imagef(src,sampler_const,global_mem);
                 }
@@ -94,8 +94,8 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
                 pixels[local_mem.y][local_mem.x] = read_imagef(src,sampler_const,global_mem);
                 if(local_coord.y >= local_size.y - KERNEL_SIZE_HALF) {
                         // Bottom right corner of the kernel
-                        local_mem.y = local_mem.y + KERNEL_SIZE_HALF;
-                        global_mem.y = global_mem.y + KERNEL_SIZE_HALF;
+                        int2 local_mem = (int2) (local_array.x + KERNEL_SIZE_HALF, local_array.y + KERNEL_SIZE_HALF);
+                        int2 global_mem = (int2) (global_coord.x + KERNEL_SIZE_HALF, global_coord.y + KERNEL_SIZE_HALF);
 
                         pixels[local_mem.y][local_mem.x] = read_imagef(src,sampler_const,global_mem);
                 }
@@ -110,8 +110,8 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
 
                 if(local_coord.x >= local_size.x - KERNEL_SIZE_HALF) {
                         // Top right corner of the kernel
-                        local_mem.x = local_mem.x + KERNEL_SIZE_HALF;
-                        global_mem.x = global_mem.x + KERNEL_SIZE_HALF;
+                        int2 local_mem = (int2) (local_array.x + KERNEL_SIZE_HALF, local_array.y - KERNEL_SIZE_HALF);
+                        int2 global_mem = (int2) (global_coord.x + KERNEL_SIZE_HALF, global_coord.y - KERNEL_SIZE_HALF);
 
                         pixels[local_mem.y][local_mem.x] = read_imagef(src,sampler_const,global_mem);
                 }
@@ -124,8 +124,8 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
                 pixels[local_mem.y][local_mem.x] = read_imagef(src,sampler_const,global_mem);
                 if(local_coord.x < KERNEL_SIZE_HALF) {
                         // Bottom left corner of the kernel
-                        local_mem.x = local_mem.x - KERNEL_SIZE_HALF;
-                        global_mem.x = global_coord.x - KERNEL_SIZE_HALF;
+                        int2 local_mem = (int2) (local_array.x - KERNEL_SIZE_HALF, local_array.y + KERNEL_SIZE_HALF);
+                        int2 global_mem = (int2) (global_coord.x - KERNEL_SIZE_HALF, global_coord.y + KERNEL_SIZE_HALF);
 
                         pixels[local_mem.y][local_mem.x] = read_imagef(src,sampler_const,global_mem);
                 }
@@ -142,6 +142,8 @@ __kernel void convolute_mem(__read_only image2d_t src, __write_only image2d_t re
                         sum += pixels[local_mem.y][local_mem.x] * filter[filter_index];
                 } 
         }
+
+        // sum = pixels[local_array.y] [local_array.x];
 
         write_imagef(result,global_coord,sum);
 

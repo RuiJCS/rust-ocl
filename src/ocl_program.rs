@@ -1,7 +1,7 @@
 extern crate ocl;
 extern crate image;
 
-use crate::filter::{Square, Filter};
+use crate::filter::{Box, Filter,Edge};
 
 use std::fs::File;
 use std::io::Read;
@@ -122,9 +122,11 @@ impl OclProgram {
 			.build().unwrap();
 
 
-		let sq: Square = Square::new(&buff_size);
+		let sq = Box::new(&buff_size);
+		// let sq = Edge::new(&buff_size);
 		// println!("{:?}",sq);
 
+		println!("{} {}",sq.as_slice().len(), sq.size());
 		let filter = Buffer::builder()
 					.queue(queue.clone())
 					.len(sq.size())
