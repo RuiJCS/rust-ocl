@@ -22,7 +22,7 @@ pub struct OclProgram {
 	end_profile: Option<ProfilingInfoResult>,
 }
 
-const WORK_GROUP: u32 = 8;
+const WORK_GROUP: u32 = 16;
 //replace this DEVICE_INFO with a builder maybe?
 
 const DEVICE_INFO: [DeviceInfo;7] = [
@@ -34,6 +34,13 @@ const DEVICE_INFO: [DeviceInfo;7] = [
 	DeviceInfo::MaxMemAllocSize,
 	DeviceInfo::MaxWorkGroupSize
 	];
+
+
+
+fn round_to(n:u32,d:u32) -> u32 {
+    let x = ((n+d-1)/d) * d;
+	x
+}
 
 impl OclProgram {
 
@@ -122,8 +129,8 @@ impl OclProgram {
 			.build().unwrap();
 
 
-		let sq = Box::new(&buff_size);
-		// let sq = Edge::new(&buff_size);
+		// let sq = Box::new(&buff_size);
+		let sq = Edge::new(&buff_size);
 		// println!("{:?}",sq);
 
 		println!("{} {}",sq.as_slice().len(), sq.size());
@@ -133,11 +140,15 @@ impl OclProgram {
 					.copy_host_slice(sq.as_slice())
 					.build().unwrap();
 
+		let local_work_group_x = WORK_GROUP;
+		let local_work_group_y = WORK_GROUP;
+		let global_work_group_x = round_to(dims.0, local_work_group_x);
+		let global_work_group_y = round_to(dims.1, local_work_group_y);
 		let kernel = Kernel::builder()
 			.program(&program)
 			.name(kernel_name)
 			.queue(queue.clone())
-			.global_work_size((dims.0,dims.1,1))
+			.global_work_size((global_work_group_x,global_work_group_y,1))
 			.local_work_size((WORK_GROUP, WORK_GROUP))
 			.arg(&src_image)
 			.arg(&dst_image)
@@ -147,9 +158,9 @@ impl OclProgram {
 		OclProgram {
 			input_image: src_image,
 			output_image: dst_image,
-			output_file:output_file,
-			kernel: kernel,
-			queue: queue,
+			output_file,
+			kernel,
+			queue,
 			start_profile: None,
 			end_profile: None,
 		}
